@@ -15,6 +15,16 @@ dependencies:
 
   cupertino_icons: ^1.0.2
   google_fonts: ^2.1.0
+  google_nav_bar: ^5.0.5
+  provider: ^6.0.1
+  shared_preferences: ^2.0.8
+  http: ^0.13.4
+  jitsi_meet: ^4.0.0
+  date_time_picker: ^2.1.0
+  image_picker: ^0.8.4+4
+  intl: ^0.17.0
+  dio: ^4.0.3
+  jwt_decoder: ^2.0.1
 
 dev_dependencies:
   flutter_test:
@@ -23,6 +33,7 @@ dev_dependencies:
   flutter_lints: ^1.0.0
 
 flutter:
-
+  assets:
+    - assets/
   uses-material-design: true
 

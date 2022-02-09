@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:prabandhak/Screens/bottom_navigation_page.dart';
+import 'package:prabandhak/helpers/methods_helper.dart';
+import 'package:prabandhak/helpers/network/api_helper.dart';
+import 'package:prabandhak/helpers/shared_preference.dart';
 import 'package:prabandhak/helpers/snackbar_helper.dart';
+import 'package:prabandhak/providers/access_token_provider.dart';
+import 'package:provider/provider.dart';
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({Key? key}) : super(key: key);
@@ -22,6 +28,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         5.0,
       ),
     ),
+    isDense: true,
+    contentPadding: const EdgeInsets.all(8.0),
   );
 
   @override
@@ -68,13 +76,16 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                             backgroundImage: NetworkImage(
                               'https://assets.volvo.com/is/image/VolvoInformationTechnologyAB/join-us-banner?qlt=82&wid=1024&ts=1624538498965&fit=constrain',
                             ),
-                            radius: 50.0,
+                            radius: 100.0,
                           ),
                           Padding(
                             padding: EdgeInsets.all(18.0),
                             child: Text(
                               'Let\'s get you started for new journey.',
-                              style: TextStyle(color: Colors.grey),
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 18.0,
+                              ),
                             ),
                           ),
                         ],
@@ -92,6 +103,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                       onChanged: (value) => email = value,
                       textInputAction: TextInputAction.next,
                     ),
+                    const SizedBox(height: 5.0),
                     TextFormField(
                       controller: passwordController,
                       decoration: inputDecoration.copyWith(
@@ -130,6 +142,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                     ),
                   ],
                 ),
+                SizedBox(
+                  height: MediaQuery.of(context).size.height / 5,
+                ),
                 OutlinedButton(
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(
@@ -138,7 +153,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   ),
                   onPressed: signUP,
                   child: Row(
-                    mainAxisSize: MainAxisSize.min,
+                    mainAxisSize: MainAxisSize.max,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: const [
                       //TODO: Add sign here
                       Text('Sign up for free')
@@ -154,29 +170,34 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   }
 
   void signIn() async {
-    if (email.isEmpty || !email.contains('@') || password.isEmpty) {
+    if (email.isEmpty || password.isEmpty) {
       showMessageSnackBar(context, 'Enter correct email.');
+      return;
     }
 
-    if (email == 'prabandhak@') {
-      //TODO: Remove this when actually logging in.
-      showLoaderDialog(context);
-      setState(() {
-        loaderVisible = true;
-      });
-      await Future.delayed(
-        const Duration(
-          seconds: 2,
-        ),
-      );
-      setState(() {
-        loaderVisible = false;
-      });
-      Navigator.popUntil(context, (route) => route.isFirst);
-      // Navigator.push(context, route);
-    }
+    showLoaderDialog(context);
+    setState(() {
+      loaderVisible = true;
+    });
 
-    //TODO: Complete sign in functionality
+    String? accessToken = await ApiHelper.getAccessCode(email, password);
+
+    setState(() {
+      loaderVisible = false;
+    });
+
+    if (accessToken != null) {
+      showMessageSnackBar(context, 'Welcome');
+      print(accessToken);
+      setStringIntoCache(ACCESS_TOKEN, accessToken);
+      await Provider.of<AccessTokenProvider>(context, listen: false)
+          .changeAccessToken(accessToken);
+      await setUser(context, accessToken);
+      makeThisPageStartOfTheStack(context, const BottomNavigationPage());
+    } else {
+      Navigator.pop(context);
+      showMessageSnackBar(context, 'Something went wrong. try again');
+    }
   }
 
   void signInHelp() {
@@ -189,10 +210,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
   void showLoaderDialog(BuildContext context) {
     AlertDialog dialog = AlertDialog(
-      content: Flexible(
-        child: Container(
-          margin: const EdgeInsets.only(left: 7),
-          child: const Text(
+      content: Container(
+        margin: const EdgeInsets.only(left: 7),
+        child: const Flexible(
+          child: Text(
             "We are signing you in, please wait...",
           ),
         ),
